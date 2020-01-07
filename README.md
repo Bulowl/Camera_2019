@@ -91,9 +91,10 @@ export PATH=$PATH:/root/buildroot-precompiled-2017.08/output/host/usr/bin
  ````
     
  Make
-    ```` shell
+```` shell
 make
 make install
+````
  
  
  
