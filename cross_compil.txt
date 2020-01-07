@@ -1,0 +1,29 @@
+
+Install the required libraries (libv4l and libjpeg) and autotools
+sudo apt-get install libjpeg-dev libv4l-dev autoconf automake libtool
+
+Clone the repository
+git clone https://github.com/twam/v4l2grab.git
+
+Go into directory
+cd v4l2grab
+
+Creating autotools files
+./autogen.sh
+
+Path
+export PATH=$PATH:/root/buildroot-precompiled-2017.08/output/host/usr/bin
+
+Run configure
+./configure --host=arm-linux
+
+Comment malloc in configure.ac
+#AC_FUNC_MALLOC
+
+Run make
+make
+
+Run make install
+sudo make install
+
+--> executable pour rasp v4l2grab
