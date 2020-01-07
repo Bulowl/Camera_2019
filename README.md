@@ -49,7 +49,51 @@ On se met ensuite en root (su -> root1* ) pour faire la commande ifconfig afin d
 
 En se connectant sur le même réseau que la rasp on peut maitenant 'faire du ssh'.
 
+
 ```` shell
 $ ssh user@172.20.21.162
 # user@172.20.21.162's password: user1*
  ````
+ 
+ ### Cross-compilation
+ 
+ On compile v4l2grab avec arm-linux-gcc sur le docker. On obtient un exécutable compatible avec la rpi3.
+ 
+ Installation des librairies 
+```` shell
+apt-get install libjpeg-dev libv4l-dev autoconf automake libtool
+ ````
+ 
+ Clone du repository
+ ```` shell
+git clone https://github.com/twam/v4l2grab.git
+ ````
+  ```` shell
+cd v4l2grab
+ ````
+ 
+ Création fichiers autotools
+  ```` shell
+./autogen.sh
+ ````
+ 
+ Ajout du path vers le compilateur
+   ```` shell
+export PATH=$PATH:/root/buildroot-precompiled-2017.08/output/host/usr/bin
+ ````
+ Configuration
+   ```` shell
+./configure --host=arm-linux
+ ````
+ Commenter malloc dans le fichier configure.ac
+   ```` shell
+#AC_FUNC_MALLOC
+ ````
+    
+ Make
+    ```` shell
+make
+make install
+ ````
+ 
+ 
