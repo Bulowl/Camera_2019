@@ -10,6 +10,27 @@
 #include <string.h>
 #include <time.h>
 
+
+#include <assert.h>
+#include <getopt.h>
+#include <fcntl.h>
+#include <malloc.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/mman.h>
+#include <sys/ioctl.h>
+#include <asm/types.h>
+#include <linux/videodev2.h>
+#include <jpeglib.h>
+#include <libv4l2.h>
+#include <stdint.h>
+#include <inttypes.h>
+
+#include "config.h"
+#include "yuv.h"
+
+
+
 #define MAXNAME 10
 #define MAXTEXT 100
 #define LEN 3 
@@ -125,7 +146,7 @@ int main(int argc, char * argv[])
 			int choice = get_msg(chat);
 			
 			//if value is wrong
-			if ((choice!='p') && (choice!='r') && (choice!='s') && (choice!='q'))
+			if ((choice!='p') && (choice!='q')) //p = take picture, q = quit
 			{
 				printf("Wrong value chosen by %s.\n", talker);
 				snprintf(buffer, sizeof(buffer),"Please enter a correct value: s, r or p.\n");
@@ -137,13 +158,31 @@ int main(int argc, char * argv[])
 			//game 
 			else {		
 				if (choice=='p') {choice = 1;}
-				else if (choice=='r') {choice=0;}
-				else if (choice=='s') {choice=2;}
 		
 				//compute cpu choice
+				/*
 				int cpu_action;
 				srand(time(NULL)); 
 				cpu_action = rand() % 3;
+				*/
+				//Take photo
+				deviceOpen();
+				deviceInit();
+
+				// start capturing
+				captureStart();
+
+				// process frames
+				mainLoop();
+
+				// stop capturing
+				captureStop();
+
+				// close device
+				deviceUninit();
+				deviceClose();
+
+
 		
 				//display user result on server
 				printf("%s chose %s; CPU chose %s. %s\n", talker,
