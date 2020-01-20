@@ -17,16 +17,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import signal
 import syslog
-syslog.openlog("Client_Camera")
-print("Message are logged in /var/log/syslog")
+syslog.openlog("Camera_client")
 
+IMAGE_SIZE =  40*480*3*8
 
-TAILLE_IMAGE =  40*480*3*8 #Taille du Buffer pour la recuperation
-
-
-
-
-class GUI(Tk):
+class GraphicUserInterface(Tk):
     def __init__(self,IP="172.20.21.162", port_serveur_camera = 7000):
         super().__init__()
         self.fig = Figure(figsize=(5, 4), dpi=100)
@@ -39,11 +34,10 @@ class GUI(Tk):
         self.receiving = 0
 
         self.Frame = Frame(self, borderwidth=2,relief = GROOVE)
-
         self.Frame.pack(side = TOP)
 
-        self.b_quit = Button(master=self.Frame, text="Quit", command=self._quit)
-        self.b_quit.pack(side=BOTTOM)
+        self.quit_butt = Button(master=self.Frame, text="Quit", command=self._quit)
+        self.quit_butt.pack(side=BOTTOM)
 
         self.b_switch = Button(self.Frame,text="Capture",command=self.switch)
         self.b_switch.pack(side=BOTTOM)   
@@ -95,13 +89,11 @@ class GUI(Tk):
             syslog.syslog(syslog.LOG_INFO, 'connecting to {} port {}'.format(*self.server_address_cam))
             self.wait_cam_i = 0
             self.camera_connected = 1
-            self.led_cam["background"] = "lawn green"
             print("Connection Established with camera")
             syslog.syslog(syslog.LOG_INFO, 'Connection Established with camera')
         except Exception as e:
             print(e)
             if self.camera_connected:
-                self.led_cam["background"] = "red"
                 self.camera_connected = 0
             if self.wait_cam_i>10:
                 print("Time Out")
