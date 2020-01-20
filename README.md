@@ -88,7 +88,6 @@ $ ./configure --host=arm-linux
 
 #AC_FUNC_MALLOC
 
-    
 Make
 ```` shell
 $ make
@@ -109,5 +108,3 @@ lancer le server (depuis la raspberry pi):
 ```` shell
 $ ./v4l2grab
 ````
-
-
