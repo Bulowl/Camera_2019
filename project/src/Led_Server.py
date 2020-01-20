@@ -164,12 +164,12 @@ if __name__ == "__main__":
         try:
             # Receive command
             data = Server.conn.recv(Server.buffer_size)
-            led_number = bytes_to_int(data)
+            led_state = bytes_to_int(data)
 
             # Move the Led
-            Server.control_led(GPIO, led_number)
-            print("[ {} ] Value send is {} \n".format(Server.addr, angle))
-            syslog.syslog(syslog.LOG_INFO, "[ {} ] Value send is {} \n".format(Server.addr, angle))
+            Server.control_led(GPIO, led_state)
+            print("[ {} ] Value send is {} \n".format(Server.addr, led_state))
+            syslog.syslog(syslog.LOG_INFO, "[ {} ] Value send is {} \n".format(Server.addr, led_state))
 
         except socket.timeout:
             print("[ {} ] Client disconnected from server \n".format(Server.addr))
