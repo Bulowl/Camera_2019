@@ -55,46 +55,56 @@ $ ssh user@172.20.21.162
 # user@172.20.21.162's password: user1*
  ````
  
- ### Cross-compilation
+### Cross-compilation
  
  On compile v4l2grab avec arm-linux-gcc sur le docker. On obtient un exécutable compatible avec la rpi3.
  
  Installation des librairies 
 ```` shell
-apt-get install libjpeg-dev libv4l-dev autoconf automake libtool
+$ apt-get install libjpeg-dev libv4l-dev autoconf automake libtool
  ````
  
  Clone du repository
- ```` shell
-git clone https://github.com/twam/v4l2grab.git
- ````
-  ```` shell
-cd v4l2grab
+```` shell
+$ git clone https://github.com/twam/v4l2grab.git
+$ cd v4l2grab
  ````
  
  Création fichiers autotools
-  ```` shell
-./autogen.sh
+```` shell
+$ ./autogen.sh
  ````
  
  Ajout du path vers le compilateur
-   ```` shell
-export PATH=$PATH:/root/buildroot-precompiled-2017.08/output/host/usr/bin
+
+```` shell
+$ export PATH=$PATH:/root/buildroot-precompiled-2017.08/output/host/usr/bin
  ````
  Configuration
-   ```` shell
-./configure --host=arm-linux
+```` shell
+$ ./configure --host=arm-linux
  ````
  Commenter malloc dans le fichier configure.ac
-   ```` shell
+
 #AC_FUNC_MALLOC
- ````
-    
- Make
+
+Make
 ```` shell
-make
-make install
+$ make
+$ make install
+```` 
+### Install Camera
+
+lien du [tuto](https://www.dexterindustries.com/howto/installing-the-raspberry-pi-camera/)
+
+On doit faire cet commande sur la raspberry pi
+```` shell
+$ modprobe bcm2835-v4l2
 ````
- 
- 
- 
+
+### Client Server
+
+lancer le server (depuis la raspberry pi):
+```` shell
+$ ./v4l2grab
+````
