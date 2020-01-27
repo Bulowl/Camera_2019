@@ -17,12 +17,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import signal
 import syslog
-syslog.openlog("Camera_client")
+syslog.openlog("Client_Camera")
+print("Message are logged in /var/log/syslog")
 
-IMAGE_SIZE =  40*480*3*8
 
-class GraphicUserInterface(Tk):
-    def __init__(self,IP="172.20.21.162", port_serveur_camera = 7000):
+TAILLE_IMAGE =  40*480*3*8 #Taille du Buffer pour la recuperation
+
+green_on = 17 
+green_off = 170
+red_on = 18
+red_off = 180
+
+
+
+
+class GUI(Tk):
+    def __init__(self,IP="172.20.21.162", port_serveur_led = 9000, port_serveur_camera = 7000):
         super().__init__()
         self.fig = Figure(figsize=(5, 4), dpi=100)
         self.ax = self.fig.add_subplot(111)
@@ -31,13 +41,15 @@ class GraphicUserInterface(Tk):
         self.quit_info = 0
         self.capture = 0 
         self.camera_connected = 0
+        self.led_connected = 0
         self.receiving = 0
 
         self.Frame = Frame(self, borderwidth=2,relief = GROOVE)
+
         self.Frame.pack(side = TOP)
 
-        self.quit_butt = Button(master=self.Frame, text="Quit", command=self._quit)
-        self.quit_butt.pack(side=BOTTOM)
+        self.b_quit = Button(master=self.Frame, text="Quit", command=self._quit)
+        self.b_quit.pack(side=BOTTOM)
 
         self.b_switch = Button(self.Frame,text="Capture",command=self.switch)
         self.b_switch.pack(side=BOTTOM)   
@@ -51,6 +63,11 @@ class GraphicUserInterface(Tk):
         self.wait_cam_i = 0
         self.wait_cam()
         self.runtime()
+
+        self.led = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_address_led = (IP, port_serveur_led)
+        self.wait_led_i=0
+        self.wait_led()
 
     def _quit(self):
         try:
@@ -89,11 +106,13 @@ class GraphicUserInterface(Tk):
             syslog.syslog(syslog.LOG_INFO, 'connecting to {} port {}'.format(*self.server_address_cam))
             self.wait_cam_i = 0
             self.camera_connected = 1
+            self.led_cam["background"] = "lawn green"
             print("Connection Established with camera")
             syslog.syslog(syslog.LOG_INFO, 'Connection Established with camera')
         except Exception as e:
             print(e)
             if self.camera_connected:
+                self.led_cam["background"] = "red"
                 self.camera_connected = 0
             if self.wait_cam_i>10:
                 print("Time Out")
@@ -102,6 +121,32 @@ class GraphicUserInterface(Tk):
             else:
                 self.wait_cam_i+=1
                 self.after(10000,self.wait_cam)
+
+        #Fonction pour attendre un connexion entre le camera et led
+    def wait_led(self):
+        if self.quit_info:
+            self._quit()
+        print("Try number ",self.wait_led_i," for led")
+        self.led.settimeout(20)
+        try:
+            self.led.settimeout(10)
+            self.led.connect(self.server_address_led)
+            print('connecting to {} port {}'.format(*self.server_address_led))
+            syslog.syslog(syslog.LOG_INFO, 'connecting to {} port {}'.format(*self.server_address_led))
+            self.wait_led_i = 0 
+            self.led_connected = 1
+            print("Connection Established with servomotor")
+            syslog.syslog(syslog.LOG_INFO, 'Connection Established with servomotor')
+        except:
+            if self.led_connected:
+                self.led_connected = 0
+            if self.wait_led_i>10:
+                print("Time Out")
+                syslog.syslog(syslog.LOG_ERR, "Time Out")
+                #self._quit()
+            else:
+                self.wait_led_i+=1
+                self.after(10000,self.wait_led)
         
 
     def runtime(self):
@@ -109,6 +154,9 @@ class GraphicUserInterface(Tk):
     
     def runtime_camera(self):
         if self.camera_connected:
+            if  not self.led_connected :
+                self.wait_led()
+            self.led.send(bytes([green_on]))
             try:
                 if not self.capture or self.receiving:
                     self.cam.send(b"0")
@@ -121,10 +169,13 @@ class GraphicUserInterface(Tk):
             if self.data != b'empty' and not self.receiving:
                 self.receiving = 1
                 self.image_recupe = np.array([])
+                self.led.send(bytes([red_off]))
+
 
             if self.data==b'empty':
                 if self.receiving:
                     self.image()
+                    self.led.send(bytes([red_on]))
                 self.receiving = 0
 
             if self.receiving:
@@ -134,11 +185,11 @@ class GraphicUserInterface(Tk):
             self.wait_cam()
 
         if self.quit_info:
+            self.led.send(bytes([green_off]))
             self._quit()
 
         self.after(40,self.runtime_camera)
 
-    #Gere les differents signaux et met la varaiable self.quit_info à true pour arréter proprement le programme
     def signal_handler(self,sig, frame):
         if (sig==signal.SIGINT or sig==signal.SIGTSTP or sig==sig.SIGTERM):
             self.quit_info = 1

@@ -7,7 +7,7 @@ On commence par récupérer le docker :
 
 ````
 $ docker pull pblottiere/embsys-rpi3-buildroot
-$ docker run -it pblottiere/embsys-rpi3-buildroot-video /bin/bashS
+$ docker run -it pblottiere/embsys-rpi3-buildroot-video /bin/bash
 # cd /root
 # tar zxvf buildroot-precompiled-2017.08.tar.gz
 ````
