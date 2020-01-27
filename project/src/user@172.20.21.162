@@ -117,7 +117,7 @@ if __name__ == "__main__":
             print("-p or --port         | Default is 9000. Port of the RPi on which the server is running")
             print("-b or --buffer_size  | Default is 1024. Buffer size in bytes for receiving the command data for the client")
             print("-t or --timeout      | Default is 300. Time in seconds before the server will end.")        
-   	    print("\n")
+   	        print("\n")
             print("Usage :")
             print("Led_Server -g gpio_pin -i hostname -p port -b buffer_size -t timeout")
             print(" or")
