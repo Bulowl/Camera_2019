@@ -71,7 +71,7 @@ class GraphicUserInterface(Tk):
             else:
                 image.append(number)
                 number = 0
-        image = np.array(image[2:640*480+2]).reshape((480,640)) #recuperation de l'image parmi les données envoyées
+        image = np.array(image[2:640*480+2]).reshape((480,640)) #recuperation de l image parmi les données envoyées
         self.ax.clear()
         self.ax.imshow(image,cmap='gray')
         self.canvas.draw()
@@ -105,7 +105,7 @@ class GraphicUserInterface(Tk):
         
 
     def runtime(self):
-        self.runtime_camera()#Fonction appelé toutes les 40ms  pour l'envoi et la reception de données avec la caméra
+        self.runtime_camera()   #Fonction appelee toutes les 40ms  pour l envoi et la reception de données avec la caméra
     
     def runtime_camera(self):
         if self.camera_connected:
@@ -138,13 +138,13 @@ class GraphicUserInterface(Tk):
 
         self.after(40,self.runtime_camera)
 
-    #Gere les différents signaux et met la varaiable self.quit_info à true pour arréter proprement le programme
+    #Gere les differents signaux et met la varaiable self.quit_info à true pour arréter proprement le programme
     def signal_handler(self,sig, frame):
         if (sig==signal.SIGINT or sig==signal.SIGTSTP or sig==sig.SIGTERM):
             self.quit_info = 1
             syslog.syslog(syslog.LOG_ERR, "SIGINT signal received")
 
-    #Permet de lancer ou d'arreter la capture
+    #Permet de lancer ou d arreter la capture
     def switch(self):
         if self.capture:
             self.capture = 0
