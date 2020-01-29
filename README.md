@@ -56,7 +56,7 @@ $ ssh user@172.20.21.162
  ````
  
 ### Cross-compilation
- 
+ #### Cross-compilation de v4l2grab
  On compile v4l2grab avec arm-linux-gcc sur le docker. On obtient un exécutable compatible avec la rpi3.
  
  Installation des librairies 
@@ -93,6 +93,23 @@ Make
 $ make
 $ make install
 ```` 
+ #### Cross-compilation de client et serveur
+Dans le dossier src:
+ ```` shell
+$ docker cp clientserver_docker/ <container_id>:/root/buildroot-precompiled-2017.08
+```` 
+Dans le docker <container_id>:
+ ```` shell
+$ cd /root/buildroot-precompiled-2017.08/clientserver_docker
+$ make
+```` 
+Dans le dossier src:
+ ```` shell
+$ docker cp <container_id>:/root/buildroot-precompiled-2017.08/clientserver_docker .
+```` 
+
+
+
 ### Install Camera
 
 lien du [tuto](https://www.dexterindustries.com/howto/installing-the-raspberry-pi-camera/)
