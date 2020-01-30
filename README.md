@@ -119,10 +119,22 @@ On doit faire cet commande sur la raspberry pi
 ```` shell
 $ modprobe bcm2835-v4l2
 ````
+Verifier qu'elle soit bien installée:
+```` shell
+$ ls /dev/video0
+/dev/video0
+````
 
 ### Client Server
 
 lancer le server (depuis la raspberry pi):
 ```` shell
-$ ./v4l2grab
+$ cd /home/user/clientserver_docker
+$ ./server <port> <pathToTheImageFolder>
+````
+
+lancer le client (depuis le pc):
+```` shell
+$ cd <pathToTheFolderclientserver_docker>
+$ ./client <server_IP> <port> <"image_extension">
 ````
