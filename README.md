@@ -109,7 +109,22 @@ Dans le dossier src:
 $ docker cp <container_id>:/root/buildroot-precompiled-2017.08/clientserver_docker .
 ```` 
 
+### Branchement LEDs
+branchement des leds:
+<p align="center">
+  <img src="https://github.com/pblottiere/embsys/blob/master/labs/rpi3/imgs/led_res.jpg" width="350" title="Github Logo">
+</p>
 
+déclarer les GPIO correspondant aux leds:
+```` shell
+$ cd /sys/class/gpio
+$ echo <gpio_pin> > export
+````
+On peut tester les Pin grace à:
+```` shell
+$ cd gpio<gpio_pin>
+$ echo 1 > value
+````
 
 ### Install Camera
 
