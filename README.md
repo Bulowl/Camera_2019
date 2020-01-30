@@ -61,6 +61,7 @@ $ ssh user@172.20.21.162
  
  Installation des librairies 
 ```` shell
+$ apt-get update
 $ apt-get install libjpeg-dev libv4l-dev autoconf automake libtool
  ````
  
