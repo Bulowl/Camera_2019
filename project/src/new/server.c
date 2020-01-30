@@ -22,7 +22,6 @@
 #include <fcntl.h>
 
 
-
 /*****Required global variables****/
 char* logpath;
 char* jpeg_array[200];
@@ -32,6 +31,132 @@ int jpeg_count = 0;
 char* file_array[200];
 char* file_sizes[200];
 int file_count = 0;
+
+/**********Define for GPIO (led control*************/
+#define IN 0
+#define OUT 1
+
+#define LOW  0
+#define HIGH 1
+
+#define PINCONNECT  17 /* P1-18 */
+#define PINTRANSFER 18  /* P1-07 */
+
+/**********GPIO Function************/
+
+static int
+GPIOExport(int pin)
+{
+#define BUFFER_MAX 3
+	char buffer[BUFFER_MAX];
+	ssize_t bytes_written;
+	int fd;
+
+	fd = open("/sys/class/gpio/export", O_WRONLY);
+	if (-1 == fd) {
+		fprintf(stderr, "Failed to open export for writing!\n");
+		return(-1);
+	}
+
+	bytes_written = snprintf(buffer, BUFFER_MAX, "%d", pin);
+	write(fd, buffer, bytes_written);
+	close(fd);
+	return(0);
+}
+
+static int
+GPIOUnexport(int pin)
+{
+	char buffer[BUFFER_MAX];
+	ssize_t bytes_written;
+	int fd;
+
+	fd = open("/sys/class/gpio/unexport", O_WRONLY);
+	if (-1 == fd) {
+		fprintf(stderr, "Failed to open unexport for writing!\n");
+		return(-1);
+	}
+
+	bytes_written = snprintf(buffer, BUFFER_MAX, "%d", pin);
+	write(fd, buffer, bytes_written);
+	close(fd);
+	return(0);
+}
+
+static int
+GPIODirection(int pin, int dir)
+{
+	static const char s_directions_str[]  = "in\0out";
+
+#define DIRECTION_MAX 35
+	char path[DIRECTION_MAX];
+	int fd;
+
+	snprintf(path, DIRECTION_MAX, "/sys/class/gpio/gpio%d/direction", pin);
+	fd = open(path, O_WRONLY);
+	if (-1 == fd) {
+		fprintf(stderr, "Failed to open gpio direction for writing!\n");
+		return(-1);
+	}
+
+	if (-1 == write(fd, &s_directions_str[IN == dir ? 0 : 3], IN == dir ? 2 : 3)) {
+		fprintf(stderr, "Failed to set direction!\n");
+		return(-1);
+	}
+
+	close(fd);
+	return(0);
+}
+
+static int
+GPIORead(int pin)
+{
+#define VALUE_MAX 30
+	char path[VALUE_MAX];
+	char value_str[3];
+	int fd;
+
+	snprintf(path, VALUE_MAX, "/sys/class/gpio/gpio%d/value", pin);
+	fd = open(path, O_RDONLY);
+	if (-1 == fd) {
+		fprintf(stderr, "Failed to open gpio value for reading!\n");
+		return(-1);
+	}
+
+	if (-1 == read(fd, value_str, 3)) {
+		fprintf(stderr, "Failed to read value!\n");
+		return(-1);
+	}
+
+	close(fd);
+
+	return(atoi(value_str));
+}
+
+static int
+GPIOWrite(int pin, int value)
+{
+	static const char s_values_str[] = "01";
+
+	char path[VALUE_MAX];
+	int fd;
+
+	snprintf(path, VALUE_MAX, "/sys/class/gpio/gpio%d/value", pin);
+	fd = open(path, O_WRONLY);
+	if (-1 == fd) {
+		fprintf(stderr, "Failed to open gpio value for writing!\n");
+		return(-1);
+	}
+
+	if (1 != write(fd, &s_values_str[LOW == value ? 0 : 1], 1)) {
+		fprintf(stderr, "Failed to write value!\n");
+		return(-1);
+	}
+
+	close(fd);
+	return(0);
+}
+
 
 //Writes file size and file data to the socket
 void write_to_socket(char* file_name, int sockfd)
@@ -165,120 +290,140 @@ int find_images(char* in_dir,char* catpath)
 int main(int argc, char* argv[])
 {
   
-  if(argc!=3)
-    {
-      perror("Incorrect number of arguments\n");
-      perror("Usage: ./server <port_number> <directory>\n");
-      exit(1);
-    }
+	if(argc!=3)
+	{
+		perror("Incorrect number of arguments\n");
+		perror("Usage: ./server <port_number> <directory>\n");
+		exit(1);
+	}
 
-  logpath = malloc(200);
+	/*********** Define GPIO ***************/
+	//Enable GPIO pins
+	if (-1 == GPIOExport(PINCONNECT) || -1 == GPIOExport(PINTRANSFER))
+		return(1);
 
-  
-  strcpy(logpath,argv[2]);
-  strcat(logpath,"/");
-  strcat(logpath,"catalog.csv");
- 
+	//Set GPIO directions
+	if (-1 == GPIODirection(PINCONNECT, OUT) || -1 == GPIODirection(PINCONNECT, OUT))
+		return(2);
 
-  struct stat st = {0};
-  
-  if(stat(logpath,&st) !=-1)
-    {
-      perror("Catalog file exists. Deleting it.\n");
-      remove(logpath);
-      FILE* fp;
-      fp = fopen(logpath,"a+");
-      perror("catalog.csv created\n");
-      fclose(fp);
-    }
-  
-  else
-    {
-      
-      FILE* fp;
-      fp = fopen(logpath,"a+");
-      perror("catalog.csv created\n");
-      fclose(fp);
-    }
+	/**************************************/
+
+	logpath = malloc(200);
 
 
-  FILE* fp;
-  fp = fopen(logpath,"a+");
-  
-  fprintf(fp,"File name,Size,Sum\n");
-  fclose(fp);
-  int i;
-  int result;
-  
-  if((result=find_images(argv[2],logpath))!=0)
-    printf("Error finding images\n");
+	strcpy(logpath,argv[2]);
+	strcat(logpath,"/");
+	strcat(logpath,"catalog.csv");
 
-  int listenfd;
-  int confd;
-  
-  struct sockaddr_in serv_addr;
-  
-  char sendBuff[1025];
-  listenfd = socket(AF_INET, SOCK_STREAM, 0);
-  
-  memset(&serv_addr,'0',sizeof(serv_addr));
-  memset(sendBuff,'0',sizeof(sendBuff));
 
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serv_addr.sin_port = htons(atoi(argv[1]));
+	struct stat st = {0};
 
-  bind(listenfd,(struct sockaddr*)&serv_addr, sizeof(serv_addr));
+	if(stat(logpath,&st) !=-1)
+	{
+		perror("Catalog file exists. Deleting it.\n");
+		remove(logpath);
+		FILE* fp;
+		fp = fopen(logpath,"a+");
+		perror("catalog.csv created\n");
+		fclose(fp);
+	}
 
-  if(listen(listenfd,10) == -1)
-    {
-      perror("Could not listen\n");
-      return -1;
-    }
-
-  while(1)
-    {
-
-      printf("Listening for clients...\n");
-      
-      confd = accept(listenfd, (struct sockaddr*)NULL, NULL);
-      
-      int n;
-      
-      char buf[10];
-      
-      printf("accepted a connection\n");
-      
-      write_to_socket(logpath,confd);
-
-      read(confd,buf,11);
-
+	else
+	{
 	  
-	  if(is_jpeg(buf))
+	  FILE* fp;
+	  fp = fopen(logpath,"a+");
+	  perror("catalog.csv created\n");
+	  fclose(fp);
+	}
+
+
+	FILE* fp;
+	fp = fopen(logpath,"a+");
+
+	fprintf(fp,"File name,Size,Sum\n");
+	fclose(fp);
+	int i;
+	int result;
+
+	if((result=find_images(argv[2],logpath))!=0)
+	printf("Error finding images\n");
+
+	int listenfd;
+	int confd;
+
+	struct sockaddr_in serv_addr;
+
+	char sendBuff[1025];
+	listenfd = socket(AF_INET, SOCK_STREAM, 0);
+
+	memset(&serv_addr,'0',sizeof(serv_addr));
+	memset(sendBuff,'0',sizeof(sendBuff));
+
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	serv_addr.sin_port = htons(atoi(argv[1]));
+
+	bind(listenfd,(struct sockaddr*)&serv_addr, sizeof(serv_addr));
+
+	if(listen(listenfd,10) == -1)
+	{
+		perror("Could not listen\n");
+		return -1;
+	}
+
+	while(1)
+	{
+
+		printf("Listening for clients...\n");
+
+		confd = accept(listenfd, (struct sockaddr*)NULL, NULL);
+
+		int n;
+
+		char buf[10];
+
+		printf("accepted a connection\n");
+
+		//PINCONNECT ON
+		if (-1 == GPIOWrite(PINCONNECT, 15))
+			return(3);
+      
+		write_to_socket(logpath,confd);
+
+		read(confd,buf,11);
+
+
+		if(is_jpeg(buf))
 	    {
-	      printf("Client in passive mode. Requesting %s files:\n",buf);
+			printf("Client in passive mode. Requesting %s files:\n",buf);
 	      
-	      if(is_jpeg(buf))
+			if(is_jpeg(buf))
 			{
 
-			  for(i=0;i<jpeg_count;i++)
-			    {
-			      char buffer[4];
-			      read(confd,buffer,5);
-			      
-			      if(strstr(buffer,"ready"))
-				write_to_socket(jpeg_array[i],confd);
-			    }
+
+				if (-1 == GPIOWrite(PINTRANSFER, 15))
+					return(4);
+
+				for(i=0;i<jpeg_count;i++){
+
+					char buffer[4];
+					read(confd,buffer,5);
+				      
+				    	if(strstr(buffer,"ready"))
+							write_to_socket(jpeg_array[i],confd);
+
+				}
 			}
 	    }
 	     
       
       //sleep(1);
       
-      return 0;
-    }
+		return 0;
+	}
 
-  close(confd);
-  
-  return 0;
+	close(confd);
+
+	return 0;
 }
