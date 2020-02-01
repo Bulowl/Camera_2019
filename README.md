@@ -142,14 +142,15 @@ $ ls /dev/video0
 
 ### Client Server
 
-lancer le server (depuis la raspberry pi):
+Lancer le server (depuis la raspberry pi):
 ```` shell
 $ cd /home/user/clientserver_docker
 $ ./server <port> <pathToTheImageFolder>
 ````
 
-lancer le client (depuis le pc):
+Lancer le client (depuis le pc):
 ```` shell
 $ cd <pathToTheFolderclientserver_docker>
 $ ./client <server_IP> <port> <"image_extension">
 ````
+<"image_extension"> est optionnel, si il n'est pas renseigné, le mode intéractif est lancé et on choisit alors le format des images que l'on veut récupérer.
