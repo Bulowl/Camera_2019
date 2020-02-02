@@ -140,6 +140,13 @@ $ ls /dev/video0
 /dev/video0
 ````
 
+### Prendre un photo
+Pour prendre une photo avec la camera il suffit de lancer la commande:
+````shell
+$./v4l2grab -h
+````
+Il ne reste plus qu'a choisir les différentes options que l'on veut mettre
+
 ### Client Server
 
 Lancer le server (depuis la raspberry pi):
